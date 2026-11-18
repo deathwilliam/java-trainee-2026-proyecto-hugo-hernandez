@@ -1,0 +1,36 @@
+
+name: fincom
+
+services:
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: fincom
+      POSTGRES_USER: banco
+      POSTGRES_PASSWORD: banco123
+    ports:
+      - "127.0.0.1:5435:5432"
+    volumes:
+      - datos-fincom:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banco -d fincom"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/fincom
+      DB_USUARIO: banco
+      DB_CLAVE: banco123
+      JWT_CLAVE: ${JWT_CLAVE:?Falta JWT_CLAVE en el archivo .env}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  datos-fincom:
